@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2007-2018 ppy Pty Ltd <contact@ppy.sh>.
 // Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
+using System;
+using System.Collections.Generic;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Track;
@@ -22,6 +24,13 @@ namespace osu.Game.Audio
         private TrackManager trackManager;
 
         private TrackManagerPreviewTrack current;
+
+        private readonly Dictionary<BeatmapSetInfo, WeakReference> existingTracks;
+
+        public PreviewTrackManager()
+        {
+            existingTracks = new Dictionary<BeatmapSetInfo, WeakReference>();
+        }
 
         [BackgroundDependencyLoader]
         private void load(AudioManager audio, FrameworkConfigManager config)
@@ -60,6 +69,13 @@ namespace osu.Game.Audio
         }
 
         /// <summary>
+        /// Checks whether required <see cref="Track"/> is already created/>
+        /// </summary>
+        /// <param name="beatmapSetInfo"><see cref="BeatmapSetInfo"/></param>
+        /// <returns>whether required <see cref="Track"/> is already created</returns>
+        public bool Exists(BeatmapSetInfo beatmapSetInfo) => existingTracks.ContainsKey(beatmapSetInfo) && existingTracks[beatmapSetInfo].IsAlive;
+
+        /// <summary>
         /// Stops any currently playing <see cref="PreviewTrack"/>.
         /// </summary>
         /// <remarks>
@@ -80,19 +96,27 @@ namespace osu.Game.Audio
         /// <summary>
         /// Creates the <see cref="TrackManagerPreviewTrack"/>.
         /// </summary>
-        protected virtual TrackManagerPreviewTrack CreatePreviewTrack(BeatmapSetInfo beatmapSetInfo, TrackManager trackManager) => new TrackManagerPreviewTrack(beatmapSetInfo, trackManager);
+        protected virtual TrackManagerPreviewTrack CreatePreviewTrack(BeatmapSetInfo beatmapSetInfo, TrackManager trackManager)
+        {
+            if (Exists(beatmapSetInfo))
+                return new TrackManagerPreviewTrack((Track)existingTracks[beatmapSetInfo].Target);
+
+            var track = trackManager.Get($"https://b.ppy.sh/preview/{beatmapSetInfo?.OnlineBeatmapSetID}.mp3");
+
+            if (!existingTracks.ContainsKey(beatmapSetInfo))
+                existingTracks.Add(beatmapSetInfo, new WeakReference(track));
+            existingTracks[beatmapSetInfo] = new WeakReference(track);
+
+            return new TrackManagerPreviewTrack(track);
+        }
 
         protected class TrackManagerPreviewTrack : PreviewTrack
         {
             public IPreviewTrackOwner Owner { get; private set; }
 
-            private readonly BeatmapSetInfo beatmapSetInfo;
-            private readonly TrackManager trackManager;
-
-            public TrackManagerPreviewTrack(BeatmapSetInfo beatmapSetInfo, TrackManager trackManager)
+            public TrackManagerPreviewTrack(Track track)
+                : base(track)
             {
-                this.beatmapSetInfo = beatmapSetInfo;
-                this.trackManager = trackManager;
             }
 
             [BackgroundDependencyLoader]
@@ -100,8 +124,6 @@ namespace osu.Game.Audio
             {
                 Owner = owner;
             }
-
-            protected override Track GetTrack() => trackManager.Get($"https://b.ppy.sh/preview/{beatmapSetInfo?.OnlineBeatmapSetID}.mp3");
         }
     }
 }

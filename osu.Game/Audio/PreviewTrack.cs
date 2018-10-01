@@ -2,7 +2,6 @@
 // Licensed under the MIT Licence - https://raw.githubusercontent.com/ppy/osu/master/LICENCE
 
 using System;
-using osu.Framework.Allocation;
 using osu.Framework.Audio.Track;
 using osu.Framework.Graphics;
 using osu.Framework.Threading;
@@ -21,13 +20,12 @@ namespace osu.Game.Audio
         /// </summary>
         public event Action Started;
 
-        private Track track;
+        private readonly Track track;
         private bool hasStarted;
 
-        [BackgroundDependencyLoader]
-        private void load()
+        protected PreviewTrack(Track track)
         {
-            track = GetTrack();
+            this.track = track;
         }
 
         /// <summary>
@@ -94,10 +92,5 @@ namespace osu.Game.Audio
             track.Stop();
             Stopped?.Invoke();
         }
-
-        /// <summary>
-        /// Retrieves the audio track.
-        /// </summary>
-        protected abstract Track GetTrack();
     }
 }
