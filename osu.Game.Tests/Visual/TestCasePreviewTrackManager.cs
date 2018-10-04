@@ -116,7 +116,7 @@ namespace osu.Game.Tests.Visual
             protected class TestPreviewTrack : TrackManagerPreviewTrack
             {
                 public TestPreviewTrack(BeatmapSetInfo beatmapSetInfo, TrackManager trackManager)
-                    : base(new TrackVirtual { Length = 100000 })
+                    : base(beatmapSetInfo, new TrackVirtual { Length = 100000 })
                 {
                 }
             }

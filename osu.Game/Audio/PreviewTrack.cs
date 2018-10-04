@@ -20,40 +20,43 @@ namespace osu.Game.Audio
         /// </summary>
         public event Action Started;
 
-        private readonly Track track;
+        public readonly Track Track;
         private bool hasStarted;
 
         protected PreviewTrack(Track track)
         {
-            this.track = track;
+            this.Track = track;
         }
 
         /// <summary>
         /// Length of the track.
         /// </summary>
-        public double Length => track?.Length ?? 0;
+        public double Length => Track?.Length ?? 0;
 
         /// <summary>
         /// The current track time.
         /// </summary>
-        public double CurrentTime => track?.CurrentTime ?? 0;
+        public double CurrentTime => Track?.CurrentTime ?? 0;
 
         /// <summary>
         /// Whether the track is loaded.
         /// </summary>
-        public bool TrackLoaded => track?.IsLoaded ?? false;
+        public bool TrackLoaded => Track?.IsLoaded ?? false;
 
         /// <summary>
         /// Whether the track is playing.
         /// </summary>
-        public bool IsRunning => track?.IsRunning ?? false;
+        public bool IsRunning => Track?.IsRunning ?? false;
 
         protected override void Update()
         {
             base.Update();
 
+            if (!hasStarted && IsRunning)
+                hasStarted = true;
+
             // Todo: Track currently doesn't signal its completion, so we have to handle it manually
-            if (hasStarted && track.HasCompleted)
+            if (hasStarted && Track.HasCompleted)
                 Stop();
         }
 
@@ -64,14 +67,17 @@ namespace osu.Game.Audio
         /// </summary>
         public void Start() => startDelegate = Schedule(() =>
         {
-            if (track == null)
+            if (Track == null)
                 return;
+
+            if (!hasStarted && IsRunning)
+                hasStarted = true;
 
             if (hasStarted)
                 return;
             hasStarted = true;
 
-            track.Restart();
+            Track.Restart();
             Started?.Invoke();
         });
 
@@ -82,14 +88,14 @@ namespace osu.Game.Audio
         {
             startDelegate?.Cancel();
 
-            if (track == null)
+            if (Track == null)
                 return;
 
             if (!hasStarted)
                 return;
             hasStarted = false;
 
-            track.Stop();
+            Track.Stop();
             Stopped?.Invoke();
         }
     }
