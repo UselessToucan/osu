@@ -27,14 +27,19 @@ namespace osu.Game.Online.Chat
                 write.Context.DatabasedHostnameInfo.Remove(hostnameInfo);
         }
 
-        public HostnameInfo Query(string host, HostnameInfo.HostnameState state)
+        public HostnameInfo Query(string host)
         {
-            return ContextFactory.Get().DatabasedHostnameInfo.Single(h => h.Hostname == host && h.State == state);
+            return ContextFactory.Get().DatabasedHostnameInfo.SingleOrDefault(h => h.Hostname == host);
         }
 
         public IEnumerable<HostnameInfo> Query(HostnameInfo.HostnameState state)
         {
             return ContextFactory.Get().DatabasedHostnameInfo.Where(h => h.State == state);
+        }
+
+        public HostnameInfo Query(string host, HostnameInfo.HostnameState state)
+        {
+            return ContextFactory.Get().DatabasedHostnameInfo.SingleOrDefault(h => h.Hostname == host && h.State == state);
         }
     }
 }
