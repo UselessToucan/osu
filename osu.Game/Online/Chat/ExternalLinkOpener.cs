@@ -37,10 +37,10 @@ namespace osu.Game.Online.Chat
             if (databasedHostname?.State == HostnameInfo.HostnameState.Denied)
                 return;
 
-            if (databasedHostname?.State == HostnameInfo.HostnameState.Allowed || !externalLinkWarning)
-                host.OpenUrlExternally(url);
-            else if (externalLinkWarning)
+            if (externalLinkWarning && databasedHostname == null)
                 dialogOverlay.Push(new ExternalLinkDialog(url, () => host.OpenUrlExternally(url)));
+            else
+                host.OpenUrlExternally(url);
         }
     }
 }
