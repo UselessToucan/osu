@@ -27,6 +27,7 @@ using osu.Game.Database;
 using osu.Game.Input;
 using osu.Game.Input.Bindings;
 using osu.Game.IO;
+using osu.Game.Online.Chat;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;
 using osu.Game.Skinning;
@@ -55,6 +56,8 @@ namespace osu.Game
         protected FileStore FileStore;
 
         protected KeyBindingStore KeyBindingStore;
+
+        protected HostnameStore HostnameStore;
 
         protected SettingsStore SettingsStore;
 
@@ -156,6 +159,7 @@ namespace osu.Game
             dependencies.Cache(BeatmapManager = new BeatmapManager(Host.Storage, contextFactory, RulesetStore, api, Audio, Host));
             dependencies.Cache(ScoreManager = new ScoreManager(RulesetStore, BeatmapManager, Host.Storage, contextFactory, Host));
             dependencies.Cache(KeyBindingStore = new KeyBindingStore(contextFactory, RulesetStore));
+            dependencies.Cache(HostnameStore = new HostnameStore(contextFactory));
             dependencies.Cache(SettingsStore = new SettingsStore(contextFactory));
             dependencies.Cache(RulesetConfigCache = new RulesetConfigCache(SettingsStore));
             dependencies.Cache(new OsuColour());

@@ -9,6 +9,7 @@ using osu.Framework.Logging;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
 using osu.Game.IO;
+using osu.Game.Online.Chat;
 using osu.Game.Rulesets;
 using osu.Game.Scoring;
 using DatabasedKeyBinding = osu.Game.Input.Bindings.DatabasedKeyBinding;
@@ -25,6 +26,7 @@ namespace osu.Game.Database
         public DbSet<BeatmapSetInfo> BeatmapSetInfo { get; set; }
         public DbSet<DatabasedKeyBinding> DatabasedKeyBinding { get; set; }
         public DbSet<DatabasedSetting> DatabasedSetting { get; set; }
+        public DbSet<HostnameInfo> DatabasedHostnameInfo { get; set; }
         public DbSet<FileInfo> FileInfo { get; set; }
         public DbSet<RulesetInfo> RulesetInfo { get; set; }
         public DbSet<SkinInfo> SkinInfo { get; set; }
