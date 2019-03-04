@@ -28,6 +28,8 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         private readonly IBindable<int> stackHeightBindable = new Bindable<int>();
         private readonly IBindable<float> scaleBindable = new Bindable<float>();
 
+        public OsuAction? HitAction => circle.HitAction;
+
         private readonly Container explodeContainer;
 
         private readonly Container scaleContainer;
@@ -100,7 +102,7 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
 
         public override Color4 AccentColour
         {
-            get { return base.AccentColour; }
+            get => base.AccentColour;
             set
             {
                 base.AccentColour = value;
@@ -137,6 +139,7 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
 
             ApproachCircle.FadeIn(Math.Min(HitObject.TimeFadeIn * 2, HitObject.TimePreempt));
             ApproachCircle.ScaleTo(1.1f, HitObject.TimePreempt);
+            ApproachCircle.Expire(true);
         }
 
         protected override void UpdateCurrentState(ArmedState state)
@@ -149,6 +152,8 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
                     this.Delay(HitObject.TimePreempt).FadeOut(500);
 
                     Expire(true);
+
+                    circle.HitAction = null;
 
                     // override lifetime end as FadeIn may have been changed externally, causing out expiration to be too early.
                     LifetimeEnd = HitObject.StartTime + HitObject.HitWindows.HalfWindowFor(HitResult.Miss);
