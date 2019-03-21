@@ -22,7 +22,7 @@ namespace osu.Game.Online.API
         private readonly OsuConfigManager config;
         private readonly OAuth authentication;
 
-        public string Endpoint = @"https://osu.ppy.sh";
+        public string Endpoint => @"https://osu.ppy.sh";
         private const string client_id = @"5";
         private const string client_secret = @"FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk";
 
@@ -70,13 +70,15 @@ namespace osu.Game.Online.API
 
         internal new void Schedule(Action action) => base.Schedule(action);
 
+        /// <summary>
+        /// Register a component to receive API events.
+        /// Fires <see cref="IOnlineComponent.APIStateChanged"/> once immediately to ensure a correct state.
+        /// </summary>
+        /// <param name="component"></param>
         public void Register(IOnlineComponent component)
         {
-            Scheduler.Add(delegate
-            {
-                components.Add(component);
-                component.APIStateChanged(this, state);
-            });
+            Scheduler.Add(delegate { components.Add(component); });
+            component.APIStateChanged(this, state);
         }
 
         public void Unregister(IOnlineComponent component)
