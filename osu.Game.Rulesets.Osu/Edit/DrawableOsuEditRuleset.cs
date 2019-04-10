@@ -15,14 +15,13 @@ namespace osu.Game.Rulesets.Osu.Edit
         {
         }
 
-        protected override Playfield CreatePlayfield() => new OsuPlayfieldNoCursor { Size = Vector2.One　};
+        protected override Playfield CreatePlayfield() => new OsuPlayfieldNoCursor();
+
+        public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer() => new OsuPlayfieldAdjustmentContainer { Size = Vector2.One };
 
         private class OsuPlayfieldNoCursor : OsuPlayfield
         {
-            public OsuPlayfieldNoCursor()
-            {
-                Cursor?.Expire();
-            }
+            protected override GameplayCursorContainer CreateCursor() => null;
         }
     }
 }
