@@ -79,6 +79,8 @@ namespace osu.Game.Screens.Select.Leaderboards
             };
         }
 
+        protected override bool IsOnlineScope => Scope != BeatmapLeaderboardScope.Local;
+
         protected override APIRequest FetchScores(Action<IEnumerable<ScoreInfo>> scoresCallback)
         {
             if (Scope == BeatmapLeaderboardScope.Local)
@@ -111,7 +113,7 @@ namespace osu.Game.Screens.Select.Leaderboards
                 return null;
             }
 
-            if (Beatmap?.OnlineBeatmapID == null)
+            if (Beatmap?.OnlineBeatmapID == null || Beatmap?.Status <= BeatmapSetOnlineStatus.Pending)
             {
                 PlaceholderState = PlaceholderState.Unavailable;
                 return null;
