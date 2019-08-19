@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using MonkeyCache.FileStore;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Track;
@@ -30,7 +31,8 @@ namespace osu.Game.Audio
         {
             // this is a temporary solution to get around muting ourselves.
             // todo: update this once we have a BackgroundTrackManager or similar.
-            trackStore = new PreviewTrackStore(new CachedOnlineStore(host.Storage.GetStorageForDirectory(Path.Combine("cache", nameof(PreviewTrackManager))), TimeSpan.FromDays(7)));
+            trackStore = new PreviewTrackStore(new CachedOnlineStore(Barrel.Create(host.Storage.GetStorageForDirectory(Path.Combine("cache", nameof(PreviewTrackManager))).GetFullPath(string.Empty)),
+                TimeSpan.FromDays(7)));
 
             audio.AddItem(trackStore);
             trackStore.AddAdjustment(AdjustableProperty.Volume, audio.VolumeTrack);
