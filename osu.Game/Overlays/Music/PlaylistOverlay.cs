@@ -10,6 +10,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Beatmaps;
+using osu.Game.Configuration;
 using osu.Game.Graphics;
 using osuTK;
 using osuTK.Graphics;
@@ -27,11 +28,15 @@ namespace osu.Game.Overlays.Music
         private FilterControl filter;
         private PlaylistList list;
 
+        private Bindable<bool> followPlayback;
+
         [BackgroundDependencyLoader]
-        private void load(OsuColour colours, Bindable<WorkingBeatmap> beatmap, BeatmapManager beatmaps)
+        private void load(OsuColour colours, Bindable<WorkingBeatmap> beatmap, BeatmapManager beatmaps, OsuConfigManager configManager)
         {
             this.beatmap.BindTo(beatmap);
             this.beatmaps = beatmaps;
+
+            followPlayback = configManager.GetBindable<bool>(OsuSetting.FollowPlayback);
 
             Children = new Drawable[]
             {

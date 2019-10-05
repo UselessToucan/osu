@@ -11,6 +11,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
 using osu.Game.Beatmaps;
+using osu.Game.Configuration;
 using osu.Game.Graphics.Containers;
 using osuTK;
 
@@ -22,6 +23,8 @@ namespace osu.Game.Overlays.Music
 
         private readonly ItemsScrollContainer items;
 
+        private Bindable<bool> followPlayback;
+
         public PlaylistList()
         {
             InternalChild = items = new ItemsScrollContainer
@@ -29,6 +32,12 @@ namespace osu.Game.Overlays.Music
                 RelativeSizeAxes = Axes.Both
             };
             items.Selected += set => Selected?.Invoke(set);
+        }
+
+        [BackgroundDependencyLoader]
+        private void load(OsuConfigManager configManager)
+        {
+            followPlayback = configManager.GetBindable<bool>(OsuSetting.FollowPlayback);
         }
 
         public new MarginPadding Padding
