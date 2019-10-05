@@ -56,8 +56,7 @@ namespace osu.Game.Overlays.Music
                         list = new PlaylistList
                         {
                             RelativeSizeAxes = Axes.Both,
-                            Padding = new MarginPadding { Top = 95, Bottom = 10, Right = 10 },
-                            Selected = itemSelected,
+                            Padding = new MarginPadding { Top = 95, Bottom = 10, Right = 10 }
                         },
                         filter = new FilterControl
                         {
@@ -69,6 +68,7 @@ namespace osu.Game.Overlays.Music
                     },
                 },
             };
+            list.Selected += itemSelected;
 
             filter.Search.OnCommit = (sender, newText) =>
             {

@@ -18,7 +18,7 @@ namespace osu.Game.Overlays.Music
 {
     public class PlaylistList : CompositeDrawable
     {
-        public Action<BeatmapSetInfo> Selected;
+        public event Action<BeatmapSetInfo> Selected;
 
         private readonly ItemsScrollContainer items;
 
@@ -26,9 +26,9 @@ namespace osu.Game.Overlays.Music
         {
             InternalChild = items = new ItemsScrollContainer
             {
-                RelativeSizeAxes = Axes.Both,
-                Selected = set => Selected?.Invoke(set),
+                RelativeSizeAxes = Axes.Both
             };
+            items.Selected += set => Selected?.Invoke(set);
         }
 
         public new MarginPadding Padding
@@ -43,7 +43,7 @@ namespace osu.Game.Overlays.Music
 
         private class ItemsScrollContainer : OsuScrollContainer
         {
-            public Action<BeatmapSetInfo> Selected;
+            public event Action<BeatmapSetInfo> Selected;
 
             private readonly SearchContainer search;
             private readonly FillFlowContainer<PlaylistItem> items;
@@ -91,7 +91,12 @@ namespace osu.Game.Overlays.Music
             {
                 if (obj == draggedItem?.BeatmapSetInfo) return;
 
-                Schedule(() => items.Insert(items.Count - 1, new PlaylistItem(obj) { OnSelect = set => Selected?.Invoke(set) }));
+                Schedule(() =>
+                {
+                    var playlistItem = new PlaylistItem(obj);
+                    playlistItem.ItemSelected += set => Selected?.Invoke(set);
+                    items.Insert(items.Count - 1, playlistItem);
+                });
             }
 
             private void removeBeatmapSet(BeatmapSetInfo obj)

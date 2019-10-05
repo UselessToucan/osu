@@ -33,7 +33,7 @@ namespace osu.Game.Overlays.Music
 
         public readonly BeatmapSetInfo BeatmapSetInfo;
 
-        public Action<BeatmapSetInfo> OnSelect;
+        public event Action<BeatmapSetInfo> ItemSelected;
 
         public bool IsDraggable { get; private set; }
 
@@ -134,7 +134,7 @@ namespace osu.Game.Overlays.Music
 
         protected override bool OnClick(ClickEvent e)
         {
-            OnSelect?.Invoke(BeatmapSetInfo);
+            ItemSelected?.Invoke(BeatmapSetInfo);
             return true;
         }
 
