@@ -15,7 +15,6 @@ using osuTK.Graphics;
 
 namespace osu.Game.Tests.Visual.Editor
 {
-    [TestFixture]
     public class TestSuiteEditorSeekSnapping : EditorClockTestSuite
     {
         public TestSuiteEditorSeekSnapping()

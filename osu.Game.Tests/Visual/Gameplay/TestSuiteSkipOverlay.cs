@@ -12,7 +12,6 @@ using osuTK.Input;
 
 namespace osu.Game.Tests.Visual.Gameplay
 {
-    [TestFixture]
     public class TestSuiteSkipOverlay : ManualInputManagerTestSuite
     {
         private SkipOverlay skip;

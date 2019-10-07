@@ -15,7 +15,6 @@ using osu.Game.Tests.Visual;
 using osuTK;
 using System.Collections.Generic;
 using System.Linq;
-using static osu.Game.Tests.Visual.OsuTestSuite.ClockBackedTestWorkingBeatmap;
 
 namespace osu.Game.Rulesets.Osu.Tests
 {
@@ -24,14 +23,14 @@ namespace osu.Game.Rulesets.Osu.Tests
         [Resolved]
         private AudioManager audioManager { get; set; }
 
-        private TrackVirtualManual track;
+        private ClockBackedTestWorkingBeatmap.TrackVirtualManual track;
 
         protected override bool Autoplay => true;
 
         protected override WorkingBeatmap CreateWorkingBeatmap(IBeatmap beatmap)
         {
             var working = new ClockBackedTestWorkingBeatmap(beatmap, new FramedClock(new ManualClock { Rate = 1 }), audioManager);
-            track = (TrackVirtualManual)working.Track;
+            track = (ClockBackedTestWorkingBeatmap.TrackVirtualManual)working.Track;
             return working;
         }
 

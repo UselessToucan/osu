@@ -16,7 +16,6 @@ using System.Linq;
 
 namespace osu.Game.Tests.Visual.Online
 {
-    [TestFixture]
     public class TestSuiteBeatmapSetOverlay : OsuTestSuite
     {
         private readonly TestBeatmapSetOverlay overlay;

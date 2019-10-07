@@ -12,7 +12,6 @@ using osu.Game.Graphics.UserInterfaceV2;
 
 namespace osu.Game.Tests.Visual.UserInterface
 {
-    [TestFixture]
     public class TestSuiteLabelledTextBox : OsuTestSuite
     {
         public override IReadOnlyList<Type> RequiredTypes => new[]

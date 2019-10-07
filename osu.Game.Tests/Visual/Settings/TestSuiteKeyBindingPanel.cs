@@ -3,13 +3,11 @@
 
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
 using osu.Game.Overlays;
 using osu.Game.Overlays.KeyBinding;
 
 namespace osu.Game.Tests.Visual.Settings
 {
-    [TestFixture]
     public class TestSuiteKeyBindingPanel : OsuTestSuite
     {
         private readonly KeyBindingPanel panel;

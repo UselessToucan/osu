@@ -15,7 +15,6 @@ using osu.Game.Overlays.Notifications;
 
 namespace osu.Game.Tests.Visual.UserInterface
 {
-    [TestFixture]
     public class TestSuiteNotificationOverlay : OsuTestSuite
     {
         public override IReadOnlyList<Type> RequiredTypes => new[]

@@ -11,7 +11,6 @@ using osuTK.Graphics;
 
 namespace osu.Game.Tests.Visual.UserInterface
 {
-    [TestFixture]
     public class TestSuiteOsuHoverContainer : ManualInputManagerTestSuite
     {
         private OsuHoverTestContainer hoverContainer;

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
@@ -11,7 +10,6 @@ using osu.Game.Graphics.UserInterface;
 
 namespace osu.Game.Tests.Visual.UserInterface
 {
-    [TestFixture]
     public class TestSuiteNumberBox : OsuTestSuite
     {
         public override IReadOnlyList<Type> RequiredTypes => new[]
