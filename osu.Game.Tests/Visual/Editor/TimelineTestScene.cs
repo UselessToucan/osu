@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Bindables;
@@ -13,7 +12,7 @@ using osu.Framework.Graphics.Shapes;
 using osu.Framework.Timing;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.UserInterface;
-using osu.Game.Rulesets.Objects;
+using osu.Game.Rulesets.Edit;
 using osu.Game.Screens.Edit;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
 using osuTK;
@@ -21,29 +20,33 @@ using osuTK.Graphics;
 
 namespace osu.Game.Tests.Visual.Editor
 {
-    [TestFixture]
-    public class TestSceneEditorComposeTimeline : EditorClockTestScene
+    public abstract class TimelineTestScene : EditorClockTestScene
     {
         public override IReadOnlyList<Type> RequiredTypes => new[]
         {
             typeof(TimelineArea),
-            typeof(TimelineHitObjectDisplay),
             typeof(Timeline),
             typeof(TimelineButton),
             typeof(CentreMarker)
         };
+
+        protected TimelineArea TimelineArea { get; private set; }
 
         [BackgroundDependencyLoader]
         private void load(AudioManager audio)
         {
             Beatmap.Value = new WaveformTestBeatmap(audio);
 
-            var editorBeatmap = new EditorBeatmap((Beatmap<HitObject>)Beatmap.Value.Beatmap);
+            var playable = Beatmap.Value.GetPlayableBeatmap(Beatmap.Value.BeatmapInfo.Ruleset);
+
+            var editorBeatmap = new EditorBeatmap(playable);
 
             Dependencies.Cache(editorBeatmap);
+            Dependencies.CacheAs<IBeatSnapProvider>(editorBeatmap);
 
-            Children = new Drawable[]
+            AddRange(new Drawable[]
             {
+                editorBeatmap,
                 new FillFlowContainer
                 {
                     AutoSizeAxes = Axes.Both,
@@ -55,16 +58,18 @@ namespace osu.Game.Tests.Visual.Editor
                         new AudioVisualiser(),
                     }
                 },
-                new TimelineArea
+                TimelineArea = new TimelineArea
                 {
-                    Child = new TimelineHitObjectDisplay(editorBeatmap),
+                    Child = CreateTestComponent(),
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
                     RelativeSizeAxes = Axes.X,
-                    Size = new Vector2(0.8f, 100)
+                    Size = new Vector2(0.8f, 100),
                 }
-            };
+            });
         }
+
+        public abstract Drawable CreateTestComponent();
 
         private class AudioVisualiser : CompositeDrawable
         {
