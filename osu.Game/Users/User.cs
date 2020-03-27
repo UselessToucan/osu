@@ -9,7 +9,7 @@ using osu.Framework.Bindables;
 
 namespace osu.Game.Users
 {
-    public class User
+    public class User : IEquatable<User>
     {
         [JsonProperty(@"id")]
         public long Id = 1;
@@ -68,6 +68,9 @@ namespace osu.Game.Users
 
         [JsonProperty(@"support_level")]
         public int SupportLevel;
+
+        [JsonProperty(@"current_mode_rank")]
+        public int? CurrentModeRank;
 
         [JsonProperty(@"is_gmt")]
         public bool IsGMT;
@@ -203,6 +206,21 @@ namespace osu.Game.Users
             public int ID;
         }
 
+        [JsonProperty("monthly_playcounts")]
+        public UserHistoryCount[] MonthlyPlaycounts;
+
+        [JsonProperty("replays_watched_counts")]
+        public UserHistoryCount[] ReplaysWatchedCounts;
+
+        public class UserHistoryCount
+        {
+            [JsonProperty("start_date")]
+            public DateTime Date;
+
+            [JsonProperty("count")]
+            public long Count;
+        }
+
         public override string ToString() => Username;
 
         /// <summary>
@@ -228,6 +246,14 @@ namespace osu.Game.Users
 
             [Description("Touch Screen")]
             Touch,
+        }
+
+        public bool Equals(User other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return Id == other.Id;
         }
     }
 }

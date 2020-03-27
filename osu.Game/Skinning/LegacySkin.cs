@@ -52,8 +52,14 @@ namespace osu.Game.Skinning
 
             if (storage != null)
             {
-                Samples = audioManager?.GetSampleStore(storage);
+                var samples = audioManager?.GetSampleStore(storage);
+                if (samples != null)
+                    samples.PlaybackConcurrency = OsuGameBase.SAMPLE_CONCURRENCY;
+
+                Samples = samples;
                 Textures = new TextureStore(new TextureLoaderStore(storage));
+
+                (storage as ResourceStore<byte[]>)?.AddExtension("ogg");
             }
         }
 
@@ -68,21 +74,21 @@ namespace osu.Game.Skinning
         {
             switch (lookup)
             {
-                case GlobalSkinConfiguration global:
-                    switch (global)
+                case GlobalSkinColours colour:
+                    switch (colour)
                     {
-                        case GlobalSkinConfiguration.ComboColours:
+                        case GlobalSkinColours.ComboColours:
                             var comboColours = Configuration.ComboColours;
                             if (comboColours != null)
                                 return SkinUtils.As<TValue>(new Bindable<IReadOnlyList<Color4>>(comboColours));
 
                             break;
+
+                        default:
+                            return SkinUtils.As<TValue>(getCustomColour(colour.ToString()));
                     }
 
                     break;
-
-                case GlobalSkinColour colour:
-                    return SkinUtils.As<TValue>(getCustomColour(colour.ToString()));
 
                 case LegacySkinConfiguration.LegacySetting legacy:
                     switch (legacy)
@@ -100,6 +106,8 @@ namespace osu.Game.Skinning
                     return SkinUtils.As<TValue>(getCustomColour(customColour.Lookup.ToString()));
 
                 default:
+                    // handles lookups like GlobalSkinConfiguration
+
                     try
                     {
                         if (Configuration.ConfigDictionary.TryGetValue(lookup.ToString(), out var val))
