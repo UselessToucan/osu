@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Primitives;
 using osu.Game.Rulesets.Objects;
+using osu.Game.Skinning;
 
 namespace osu.Game.Rulesets.Taiko.Objects.Drawables
 {
@@ -44,7 +45,7 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
 
         /// <summary>
         /// Moves <see cref="Content"/> to a layer proxied above the playfield.
-        /// Does nothing is content is already proxied.
+        /// Does nothing if content is already proxied.
         /// </summary>
         protected void ProxyContent()
         {
@@ -115,7 +116,7 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
         public new TObject HitObject;
 
         protected readonly Vector2 BaseSize;
-        protected readonly CompositeDrawable MainPiece;
+        protected readonly SkinnableDrawable MainPiece;
 
         private readonly Container<DrawableStrongNestedHit> strongHitContainer;
 
@@ -164,10 +165,10 @@ namespace osu.Game.Rulesets.Taiko.Objects.Drawables
             return base.CreateNestedHitObject(hitObject);
         }
 
-        // Normal and clap samples are handled by the drum
-        protected override IEnumerable<HitSampleInfo> GetSamples() => HitObject.Samples.Where(s => s.Name != HitSampleInfo.HIT_NORMAL && s.Name != HitSampleInfo.HIT_CLAP);
+        // Most osu!taiko hitsounds are managed by the drum (see DrumSampleMapping).
+        public override IEnumerable<HitSampleInfo> GetSamples() => Enumerable.Empty<HitSampleInfo>();
 
-        protected abstract CompositeDrawable CreateMainPiece();
+        protected abstract SkinnableDrawable CreateMainPiece();
 
         /// <summary>
         /// Creates the handler for this <see cref="DrawableHitObject"/>'s <see cref="StrongHitObject"/>.

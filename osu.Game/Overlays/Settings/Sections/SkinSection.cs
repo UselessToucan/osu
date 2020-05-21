@@ -1,6 +1,7 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using System.Linq;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -19,13 +20,19 @@ namespace osu.Game.Overlays.Settings.Sections
 
         public override string Header => "Skin";
 
-        public override IconUsage Icon => FontAwesome.Solid.PaintBrush;
+        public override Drawable CreateIcon() => new SpriteIcon
+        {
+            Icon = FontAwesome.Solid.PaintBrush
+        };
 
         private readonly Bindable<SkinInfo> dropdownBindable = new Bindable<SkinInfo> { Default = SkinInfo.Default };
         private readonly Bindable<int> configBindable = new Bindable<int>();
 
         [Resolved]
         private SkinManager skins { get; set; }
+
+        private IBindable<WeakReference<SkinInfo>> managerAdded;
+        private IBindable<WeakReference<SkinInfo>> managerRemoved;
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config)
@@ -63,8 +70,11 @@ namespace osu.Game.Overlays.Settings.Sections
                 },
             };
 
-            skins.ItemAdded += itemAdded;
-            skins.ItemRemoved += itemRemoved;
+            managerAdded = skins.ItemAdded.GetBoundCopy();
+            managerAdded.BindValueChanged(itemAdded);
+
+            managerRemoved = skins.ItemRemoved.GetBoundCopy();
+            managerRemoved.BindValueChanged(itemRemoved);
 
             config.BindWith(OsuSetting.Skin, configBindable);
 
@@ -79,19 +89,16 @@ namespace osu.Game.Overlays.Settings.Sections
             dropdownBindable.BindValueChanged(skin => configBindable.Value = skin.NewValue.ID);
         }
 
-        private void itemRemoved(SkinInfo s) => Schedule(() => skinDropdown.Items = skinDropdown.Items.Where(i => i.ID != s.ID).ToArray());
-
-        private void itemAdded(SkinInfo s) => Schedule(() => skinDropdown.Items = skinDropdown.Items.Append(s).ToArray());
-
-        protected override void Dispose(bool isDisposing)
+        private void itemAdded(ValueChangedEvent<WeakReference<SkinInfo>> weakItem)
         {
-            base.Dispose(isDisposing);
+            if (weakItem.NewValue.TryGetTarget(out var item))
+                Schedule(() => skinDropdown.Items = skinDropdown.Items.Append(item).ToArray());
+        }
 
-            if (skins != null)
-            {
-                skins.ItemAdded -= itemAdded;
-                skins.ItemRemoved -= itemRemoved;
-            }
+        private void itemRemoved(ValueChangedEvent<WeakReference<SkinInfo>> weakItem)
+        {
+            if (weakItem.NewValue.TryGetTarget(out var item))
+                Schedule(() => skinDropdown.Items = skinDropdown.Items.Where(i => i.ID != item.ID).ToArray());
         }
 
         private class SizeSlider : OsuSliderBar<float>
