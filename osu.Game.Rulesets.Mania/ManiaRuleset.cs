@@ -30,6 +30,7 @@ using osu.Game.Rulesets.Mania.Skinning;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Skinning;
 using osu.Game.Scoring;
+using osu.Game.Screens.Ranking.Statistics;
 
 namespace osu.Game.Rulesets.Mania
 {
@@ -43,6 +44,8 @@ namespace osu.Game.Rulesets.Mania
         public override DrawableRuleset CreateDrawableRulesetWith(IBeatmap beatmap, IReadOnlyList<Mod> mods = null) => new DrawableManiaRuleset(this, beatmap, mods);
 
         public override ScoreProcessor CreateScoreProcessor() => new ManiaScoreProcessor();
+
+        public override HealthProcessor CreateHealthProcessor(double drainStartTime) => new DrainingHealthProcessor(drainStartTime, 0.2);
 
         public override IBeatmapConverter CreateBeatmapConverter(IBeatmap beatmap) => new ManiaBeatmapConverter(beatmap, this);
 
@@ -307,6 +310,21 @@ namespace osu.Game.Rulesets.Mania
         {
             return (PlayfieldType)Enum.GetValues(typeof(PlayfieldType)).Cast<int>().OrderByDescending(i => i).First(v => variant >= v);
         }
+
+        public override StatisticRow[] CreateStatisticsForScore(ScoreInfo score, IBeatmap playableBeatmap) => new[]
+        {
+            new StatisticRow
+            {
+                Columns = new[]
+                {
+                    new StatisticItem("Timing Distribution", new HitEventTimingDistributionGraph(score.HitEvents)
+                    {
+                        RelativeSizeAxes = Axes.X,
+                        Height = 250
+                    }),
+                }
+            }
+        };
     }
 
     public enum PlayfieldType

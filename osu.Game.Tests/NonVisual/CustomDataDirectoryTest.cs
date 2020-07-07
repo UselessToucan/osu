@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using osu.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Configuration;
 using osu.Framework.Platform;
@@ -35,8 +36,7 @@ namespace osu.Game.Tests.NonVisual
                     var osu = loadOsu(host);
                     var storage = osu.Dependencies.Get<Storage>();
 
-                    string defaultStorageLocation = Path.Combine(Environment.CurrentDirectory, "headless", nameof(TestDefaultDirectory));
-
+                    string defaultStorageLocation = Path.Combine(RuntimeInfo.StartupDirectory, "headless", nameof(TestDefaultDirectory));
                     Assert.That(storage.GetFullPath("."), Is.EqualTo(defaultStorageLocation));
                 }
                 finally
@@ -46,17 +46,17 @@ namespace osu.Game.Tests.NonVisual
             }
         }
 
-        private string customPath => Path.Combine(Environment.CurrentDirectory, "custom-path");
+        private string customPath => Path.Combine(RuntimeInfo.StartupDirectory, "custom-path");
 
         [Test]
         public void TestCustomDirectory()
         {
             using (var host = new HeadlessGameHost(nameof(TestCustomDirectory)))
             {
-                string headlessPrefix = Path.Combine("headless", nameof(TestCustomDirectory));
+                string defaultStorageLocation = Path.Combine(RuntimeInfo.StartupDirectory, "headless", nameof(TestCustomDirectory));
 
                 // need access before the game has constructed its own storage yet.
-                Storage storage = new DesktopStorage(headlessPrefix, host);
+                Storage storage = new DesktopStorage(defaultStorageLocation, host);
                 // manual cleaning so we can prepare a config file.
                 storage.DeleteDirectory(string.Empty);
 
@@ -84,10 +84,10 @@ namespace osu.Game.Tests.NonVisual
         {
             using (var host = new HeadlessGameHost(nameof(TestSubDirectoryLookup)))
             {
-                string headlessPrefix = Path.Combine("headless", nameof(TestSubDirectoryLookup));
+                string defaultStorageLocation = Path.Combine(RuntimeInfo.StartupDirectory, "headless", nameof(TestSubDirectoryLookup));
 
                 // need access before the game has constructed its own storage yet.
-                Storage storage = new DesktopStorage(headlessPrefix, host);
+                Storage storage = new DesktopStorage(defaultStorageLocation, host);
                 // manual cleaning so we can prepare a config file.
                 storage.DeleteDirectory(string.Empty);
 
@@ -127,6 +127,9 @@ namespace osu.Game.Tests.NonVisual
                     var osu = loadOsu(host);
                     var storage = osu.Dependencies.Get<Storage>();
 
+                    // Store the current storage's path. We'll need to refer to this for assertions in the original directory after the migration completes.
+                    string originalDirectory = storage.GetFullPath(".");
+
                     // ensure we perform a save
                     host.Dependencies.Get<FrameworkConfigManager>().Save();
 
@@ -136,7 +139,7 @@ namespace osu.Game.Tests.NonVisual
                     // for testing nested files are not ignored (only top level)
                     host.Storage.GetStorageForDirectory("test-nested").GetStorageForDirectory("cache");
 
-                    string defaultStorageLocation = Path.Combine(Environment.CurrentDirectory, "headless", nameof(TestMigration));
+                    string defaultStorageLocation = Path.Combine(RuntimeInfo.StartupDirectory, "headless", nameof(TestMigration));
 
                     Assert.That(storage.GetFullPath("."), Is.EqualTo(defaultStorageLocation));
 
@@ -145,25 +148,25 @@ namespace osu.Game.Tests.NonVisual
                     Assert.That(storage.GetFullPath("."), Is.EqualTo(customPath));
 
                     // ensure cache was not moved
-                    Assert.That(host.Storage.ExistsDirectory("cache"));
+                    Assert.That(Directory.Exists(Path.Combine(originalDirectory, "cache")));
 
                     // ensure nested cache was moved
-                    Assert.That(!host.Storage.ExistsDirectory(Path.Combine("test-nested", "cache")));
+                    Assert.That(!Directory.Exists(Path.Combine(originalDirectory, "test-nested", "cache")));
                     Assert.That(storage.ExistsDirectory(Path.Combine("test-nested", "cache")));
 
                     foreach (var file in OsuStorage.IGNORE_FILES)
                     {
-                        Assert.That(host.Storage.Exists(file), Is.True);
+                        Assert.That(File.Exists(Path.Combine(originalDirectory, file)));
                         Assert.That(storage.Exists(file), Is.False);
                     }
 
                     foreach (var dir in OsuStorage.IGNORE_DIRECTORIES)
                     {
-                        Assert.That(host.Storage.ExistsDirectory(dir), Is.True);
+                        Assert.That(Directory.Exists(Path.Combine(originalDirectory, dir)));
                         Assert.That(storage.ExistsDirectory(dir), Is.False);
                     }
 
-                    Assert.That(new StreamReader(host.Storage.GetStream("storage.ini")).ReadToEnd().Contains($"FullPath = {customPath}"));
+                    Assert.That(new StreamReader(Path.Combine(originalDirectory, "storage.ini")).ReadToEnd().Contains($"FullPath = {customPath}"));
                 }
                 finally
                 {
