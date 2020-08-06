@@ -205,7 +205,7 @@ namespace osu.Game.Tests.Visual.Components
         {
             public bool AllowUpdate = true;
 
-            public new PreviewTrack CurrentTrack => base.CurrentTrack;
+            public new PreviewTrack CurrentTrack => base.CurrentTrack.Value;
 
             protected override TrackManagerPreviewTrack CreatePreviewTrack(BeatmapSetInfo beatmapSetInfo, ITrackStore trackStore) => new TestPreviewTrack(beatmapSetInfo, trackStore);
 
