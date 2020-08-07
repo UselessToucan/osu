@@ -24,7 +24,7 @@ namespace osu.Game.Audio
 
         private PreviewTrackStore trackStore;
 
-        protected Bindable<TrackManagerPreviewTrack> CurrentTrack = new Bindable<TrackManagerPreviewTrack>();
+        protected readonly Bindable<TrackManagerPreviewTrack> CurrentTrack = new Bindable<TrackManagerPreviewTrack>();
 
         [BackgroundDependencyLoader]
         private void load()
@@ -58,7 +58,7 @@ namespace osu.Game.Audio
                 if (CurrentTrack.Value != track)
                     return;
 
-                CurrentTrack = null;
+                CurrentTrack.Value = null;
                 audio.Tracks.RemoveAdjustment(AdjustableProperty.Volume, muteBindable);
             });
 
