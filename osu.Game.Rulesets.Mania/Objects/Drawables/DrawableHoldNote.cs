@@ -229,21 +229,15 @@ namespace osu.Game.Rulesets.Mania.Objects.Drawables
             }
         }
 
-        protected override void UpdateStateTransforms(ArmedState state)
-        {
-            using (BeginDelayedSequence(HitObject.Duration, true))
-                base.UpdateStateTransforms(state);
-        }
-
         protected override void CheckForResult(bool userTriggered, double timeOffset)
         {
             if (Tail.AllJudged)
             {
-                ApplyResult(r => r.Type = HitResult.Perfect);
+                ApplyResult(r => r.Type = r.Judgement.MaxResult);
                 endHold();
             }
 
-            if (Tail.Result.Type == HitResult.Miss)
+            if (Tail.Judged && !Tail.IsHit)
                 HasBroken = true;
         }
 
@@ -253,6 +247,10 @@ namespace osu.Game.Rulesets.Mania.Objects.Drawables
                 return false;
 
             if (action != Action.Value)
+                return false;
+
+            // do not run any of this logic when rewinding, as it inverts order of presses/releases.
+            if (Time.Elapsed < 0)
                 return false;
 
             if (CheckHittable?.Invoke(this, Time.Current) == false)
@@ -285,6 +283,10 @@ namespace osu.Game.Rulesets.Mania.Objects.Drawables
                 return;
 
             if (action != Action.Value)
+                return;
+
+            // do not run any of this logic when rewinding, as it inverts order of presses/releases.
+            if (Time.Elapsed < 0)
                 return;
 
             // Make sure a hold was started

@@ -16,6 +16,8 @@ namespace osu.Game.Beatmaps.Formats
     public abstract class LegacyDecoder<T> : Decoder<T>
         where T : new()
     {
+        public const int LATEST_VERSION = 14;
+
         protected readonly int FormatVersion;
 
         protected LegacyDecoder(int version)
@@ -92,7 +94,7 @@ namespace osu.Game.Beatmaps.Formats
         {
             var pair = SplitKeyVal(line);
 
-            bool isCombo = pair.Key.StartsWith(@"Combo");
+            bool isCombo = pair.Key.StartsWith(@"Combo", StringComparison.Ordinal);
 
             string[] split = pair.Value.Split(',');
 

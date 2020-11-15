@@ -12,12 +12,9 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Audio;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Input.Bindings;
 using osu.Framework.Utils;
 using osu.Framework.Threading;
 using osu.Game.Beatmaps;
-using osu.Game.Input.Bindings;
-using osu.Game.Overlays.OSD;
 using osu.Game.Rulesets.Mods;
 
 namespace osu.Game.Overlays
@@ -25,7 +22,7 @@ namespace osu.Game.Overlays
     /// <summary>
     /// Handles playback of the global music track.
     /// </summary>
-    public class MusicController : CompositeDrawable, IKeyBindingHandler<GlobalAction>
+    public class MusicController : CompositeDrawable
     {
         [Resolved]
         private BeatmapManager beatmaps { get; set; }
@@ -48,7 +45,10 @@ namespace osu.Game.Overlays
 
         private readonly BindableList<BeatmapSetInfo> beatmapSets = new BindableList<BeatmapSetInfo>();
 
-        public bool IsUserPaused { get; private set; }
+        /// <summary>
+        /// Whether the user has requested the track to be paused. Use <see cref="IsPlaying"/> to determine whether the track is still playing.
+        /// </summary>
+        public bool UserPauseRequested { get; private set; }
 
         /// <summary>
         /// Fired when the global <see cref="WorkingBeatmap"/> has changed.
@@ -61,9 +61,6 @@ namespace osu.Game.Overlays
 
         [Resolved]
         private IBindable<IReadOnlyList<Mod>> mods { get; set; }
-
-        [Resolved(canBeNull: true)]
-        private OnScreenDisplay onScreenDisplay { get; set; }
 
         [NotNull]
         public DrawableTrack CurrentTrack { get; private set; } = new DrawableTrack(new TrackVirtual(1000));
@@ -86,6 +83,11 @@ namespace osu.Game.Overlays
             beatmap.BindValueChanged(beatmapChanged, true);
             mods.BindValueChanged(_ => ResetTrackAdjustments(), true);
         }
+
+        /// <summary>
+        /// Forcefully reload the current <see cref="WorkingBeatmap"/>'s track from disk.
+        /// </summary>
+        public void ReloadCurrentTrack() => changeTrack();
 
         /// <summary>
         /// Change the position of a <see cref="BeatmapSetInfo"/> in the current playlist.
@@ -149,9 +151,9 @@ namespace osu.Game.Overlays
         /// </summary>
         public void EnsurePlayingSomething()
         {
-            if (IsUserPaused) return;
+            if (UserPauseRequested) return;
 
-            if (CurrentTrack.IsDummyDevice)
+            if (CurrentTrack.IsDummyDevice || beatmap.Value.BeatmapSetInfo.DeletePending)
             {
                 if (beatmap.Disabled)
                     return;
@@ -167,10 +169,17 @@ namespace osu.Game.Overlays
         /// <summary>
         /// Start playing the current track (if not already playing).
         /// </summary>
+        /// <param name="restart">Whether to restart the track from the beginning.</param>
+        /// <param name="requestedByUser">
+        /// Whether the request to play was issued by the user rather than internally.
+        /// Specifying <c>true</c> will ensure that other methods like <see cref="EnsurePlayingSomething"/>
+        /// will resume music playback going forward.
+        /// </param>
         /// <returns>Whether the operation was successful.</returns>
-        public bool Play(bool restart = false)
+        public bool Play(bool restart = false, bool requestedByUser = false)
         {
-            IsUserPaused = false;
+            if (requestedByUser)
+                UserPauseRequested = false;
 
             if (restart)
                 CurrentTrack.Restart();
@@ -183,9 +192,14 @@ namespace osu.Game.Overlays
         /// <summary>
         /// Stop playing the current track and pause at the current position.
         /// </summary>
-        public void Stop()
+        /// <param name="requestedByUser">
+        /// Whether the request to stop was issued by the user rather than internally.
+        /// Specifying <c>true</c> will ensure that other methods like <see cref="EnsurePlayingSomething"/>
+        /// will not resume music playback until the next explicit call to <see cref="Play"/>.
+        /// </param>
+        public void Stop(bool requestedByUser = false)
         {
-            IsUserPaused = true;
+            UserPauseRequested |= requestedByUser;
             if (CurrentTrack.IsRunning)
                 CurrentTrack.Stop();
         }
@@ -197,9 +211,9 @@ namespace osu.Game.Overlays
         public bool TogglePause()
         {
             if (CurrentTrack.IsRunning)
-                Stop();
+                Stop(true);
             else
-                Play();
+                Play(requestedByUser: true);
 
             return true;
         }
@@ -207,7 +221,13 @@ namespace osu.Game.Overlays
         /// <summary>
         /// Play the previous track or restart the current track if it's current time below <see cref="restart_cutoff_point"/>.
         /// </summary>
-        public void PreviousTrack() => Schedule(() => prev());
+        /// <param name="onSuccess">Invoked when the operation has been performed successfully.</param>
+        public void PreviousTrack(Action<PreviousTrackResult> onSuccess = null) => Schedule(() =>
+        {
+            PreviousTrackResult res = prev();
+            if (res != PreviousTrackResult.None)
+                onSuccess?.Invoke(res);
+        });
 
         /// <summary>
         /// Play the previous track or restart the current track if it's current time below <see cref="restart_cutoff_point"/>.
@@ -243,7 +263,14 @@ namespace osu.Game.Overlays
         /// <summary>
         /// Play the next random or playlist track.
         /// </summary>
-        public void NextTrack() => Schedule(() => next());
+        /// <param name="onSuccess">Invoked when the operation has been performed successfully.</param>
+        /// <returns>A <see cref="ScheduledDelegate"/> of the operation.</returns>
+        public void NextTrack(Action onSuccess = null) => Schedule(() =>
+        {
+            bool res = next();
+            if (res)
+                onSuccess?.Invoke();
+        });
 
         private bool next()
         {
@@ -405,54 +432,6 @@ namespace osu.Game.Overlays
             {
                 foreach (var mod in mods.Value.OfType<IApplicableToTrack>())
                     mod.ApplyToTrack(CurrentTrack);
-            }
-        }
-
-        public bool OnPressed(GlobalAction action)
-        {
-            if (beatmap.Disabled)
-                return false;
-
-            switch (action)
-            {
-                case GlobalAction.MusicPlay:
-                    if (TogglePause())
-                        onScreenDisplay?.Display(new MusicControllerToast(IsPlaying ? "Play track" : "Pause track"));
-                    return true;
-
-                case GlobalAction.MusicNext:
-                    if (next())
-                        onScreenDisplay?.Display(new MusicControllerToast("Next track"));
-
-                    return true;
-
-                case GlobalAction.MusicPrev:
-                    switch (prev())
-                    {
-                        case PreviousTrackResult.Restart:
-                            onScreenDisplay?.Display(new MusicControllerToast("Restart track"));
-                            break;
-
-                        case PreviousTrackResult.Previous:
-                            onScreenDisplay?.Display(new MusicControllerToast("Previous track"));
-                            break;
-                    }
-
-                    return true;
-            }
-
-            return false;
-        }
-
-        public void OnReleased(GlobalAction action)
-        {
-        }
-
-        public class MusicControllerToast : Toast
-        {
-            public MusicControllerToast(string action)
-                : base("Music Playback", action, string.Empty)
-            {
             }
         }
     }
