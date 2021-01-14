@@ -61,9 +61,26 @@ namespace osu.Game.Online.Multiplayer
         public MultiplayerRoom? Room { get; private set; }
 
         /// <summary>
-        /// The users currently in gameplay.
+        /// The users in the joined <see cref="Room"/> which are participating in the current gameplay loop.
         /// </summary>
-        public readonly BindableList<int> PlayingUsers = new BindableList<int>();
+        public readonly BindableList<int> CurrentMatchPlayingUserIds = new BindableList<int>();
+
+        /// <summary>
+        /// The <see cref="MultiplayerRoomUser"/> corresponding to the local player, if available.
+        /// </summary>
+        public MultiplayerRoomUser? LocalUser => Room?.Users.SingleOrDefault(u => u.User?.Id == api.LocalUser.Value.Id);
+
+        /// <summary>
+        /// Whether the <see cref="LocalUser"/> is the host in <see cref="Room"/>.
+        /// </summary>
+        public bool IsHost
+        {
+            get
+            {
+                var localUser = LocalUser;
+                return localUser != null && Room?.Host != null && localUser.Equals(Room.Host);
+            }
+        }
 
         [Resolved]
         private UserLookupCache userLookupCache { get; set; } = null!;
@@ -84,7 +101,7 @@ namespace osu.Game.Online.Multiplayer
             IsConnected.BindValueChanged(connected =>
             {
                 // clean up local room state on server disconnect.
-                if (!connected.NewValue)
+                if (!connected.NewValue && Room != null)
                 {
                     Logger.Log("Connection to multiplayer server was lost.", LoggingTarget.Runtime, LogLevel.Important);
                     LeaveRoom().CatchUnobservedExceptions();
@@ -133,6 +150,7 @@ namespace osu.Game.Online.Multiplayer
 
                 apiRoom = null;
                 Room = null;
+                CurrentMatchPlayingUserIds.Clear();
 
                 RoomUpdated?.Invoke();
             }, false);
@@ -177,11 +195,39 @@ namespace osu.Game.Online.Multiplayer
             });
         }
 
+        /// <summary>
+        /// Toggles the <see cref="LocalUser"/>'s ready state.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">If a toggle of ready state is not valid at this time.</exception>
+        public async Task ToggleReady()
+        {
+            var localUser = LocalUser;
+
+            if (localUser == null)
+                return;
+
+            switch (localUser.State)
+            {
+                case MultiplayerUserState.Idle:
+                    await ChangeState(MultiplayerUserState.Ready);
+                    return;
+
+                case MultiplayerUserState.Ready:
+                    await ChangeState(MultiplayerUserState.Idle);
+                    return;
+
+                default:
+                    throw new InvalidOperationException($"Cannot toggle ready when in {localUser.State}");
+            }
+        }
+
         public abstract Task TransferHost(int userId);
 
         public abstract Task ChangeSettings(MultiplayerRoomSettings settings);
 
         public abstract Task ChangeState(MultiplayerUserState newState);
+
+        public abstract Task ChangeBeatmapAvailability(BeatmapAvailability newBeatmapAvailability);
 
         public abstract Task StartMatch();
 
@@ -253,7 +299,7 @@ namespace osu.Game.Online.Multiplayer
                     return;
 
                 Room.Users.Remove(user);
-                PlayingUsers.Remove(user.UserID);
+                CurrentMatchPlayingUserIds.Remove(user.UserID);
 
                 RoomUpdated?.Invoke();
             }, false);
@@ -302,8 +348,28 @@ namespace osu.Game.Online.Multiplayer
 
                 Room.Users.Single(u => u.UserID == userId).State = state;
 
-                if (state != MultiplayerUserState.Playing)
-                    PlayingUsers.Remove(userId);
+                updateUserPlayingState(userId, state);
+
+                RoomUpdated?.Invoke();
+            }, false);
+
+            return Task.CompletedTask;
+        }
+
+        Task IMultiplayerClient.UserBeatmapAvailabilityChanged(int userId, BeatmapAvailability beatmapAvailability)
+        {
+            if (Room == null)
+                return Task.CompletedTask;
+
+            Scheduler.Add(() =>
+            {
+                var user = Room?.Users.SingleOrDefault(u => u.UserID == userId);
+
+                // errors here are not critical - beatmap availability state is mostly for display.
+                if (user == null)
+                    return;
+
+                user.BeatmapAvailability = beatmapAvailability;
 
                 RoomUpdated?.Invoke();
             }, false);
@@ -336,8 +402,6 @@ namespace osu.Game.Online.Multiplayer
             {
                 if (Room == null)
                     return;
-
-                PlayingUsers.AddRange(Room.Users.Where(u => u.State == MultiplayerUserState.Playing).Select(u => u.UserID));
 
                 MatchStarted?.Invoke();
             }, false);
@@ -453,6 +517,25 @@ namespace osu.Game.Online.Multiplayer
 
             apiRoom.Playlist.Clear(); // Clearing should be unnecessary, but here for sanity.
             apiRoom.Playlist.Add(playlistItem);
+        }
+
+        /// <summary>
+        /// For the provided user ID, update whether the user is included in <see cref="CurrentMatchPlayingUserIds"/>.
+        /// </summary>
+        /// <param name="userId">The user's ID.</param>
+        /// <param name="state">The new state of the user.</param>
+        private void updateUserPlayingState(int userId, MultiplayerUserState state)
+        {
+            bool wasPlaying = CurrentMatchPlayingUserIds.Contains(userId);
+            bool isPlaying = state >= MultiplayerUserState.WaitingForLoad && state <= MultiplayerUserState.FinishedPlay;
+
+            if (isPlaying == wasPlaying)
+                return;
+
+            if (isPlaying)
+                CurrentMatchPlayingUserIds.Add(userId);
+            else
+                CurrentMatchPlayingUserIds.Remove(userId);
         }
     }
 }
