@@ -28,7 +28,6 @@ using osu.Framework.Graphics.Sprites;
 using osu.Framework.Input;
 using osu.Framework.Input.Bindings;
 using osu.Framework.Input.Events;
-using osu.Framework.Platform;
 using osu.Framework.Threading;
 using osu.Game.Beatmaps;
 using osu.Game.Collections;
@@ -52,6 +51,7 @@ using osu.Game.Updater;
 using osu.Game.Utils;
 using LogLevel = osu.Framework.Logging.LogLevel;
 using osu.Game.Database;
+using osu.Game.IO;
 
 namespace osu.Game
 {
@@ -88,7 +88,7 @@ namespace osu.Game
 
         protected SentryLogger SentryLogger;
 
-        public virtual Storage GetStorageForStableInstall() => null;
+        public virtual StableStorage GetStorageForStableInstall() => null;
 
         public float ToolbarOffset => (Toolbar?.Position.Y ?? 0) + (Toolbar?.DrawHeight ?? 0);
 
@@ -383,7 +383,7 @@ namespace osu.Game
 
                 Ruleset.Value = selection.Ruleset;
                 Beatmap.Value = BeatmapManager.GetWorkingBeatmap(selection);
-            }, validScreens: new[] { typeof(PlaySongSelect) });
+            }, validScreens: new[] { typeof(SongSelect) });
         }
 
         /// <summary>
@@ -468,6 +468,16 @@ namespace osu.Game
         private void modsChanged(ValueChangedEvent<IReadOnlyList<Mod>> mods)
         {
             updateModDefaults();
+
+            // a lease may be taken on the mods bindable, at which point we can't really ensure valid mods.
+            if (SelectedMods.Disabled)
+                return;
+
+            if (!ModUtils.CheckValidForGameplay(mods.NewValue, out var invalid))
+            {
+                // ensure we always have a valid set of mods.
+                SelectedMods.Value = mods.NewValue.Except(invalid).ToArray();
+            }
         }
 
         private void updateModDefaults()
@@ -768,7 +778,7 @@ namespace osu.Game
 
                 if (recentLogCount < short_term_display_limit)
                 {
-                    Schedule(() => notifications.Post(new SimpleNotification
+                    Schedule(() => notifications.Post(new SimpleErrorNotification
                     {
                         Icon = entry.Level == LogLevel.Important ? FontAwesome.Solid.ExclamationCircle : FontAwesome.Solid.Bomb,
                         Text = entry.Message.Truncate(256) + (entry.Exception != null && IsDeployedBuild ? "\n\nThis error has been automatically reported to the devs." : string.Empty),
