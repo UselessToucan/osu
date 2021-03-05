@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -751,6 +752,7 @@ namespace osu.Game.Tests.Visual.SongSelect
             {
                 var usableRulesets = rulesets.AvailableRulesets.Where(r => r.ID != 2).ToArray();
                 imported = manager.Import(createTestBeatmapSet(usableRulesets, 50)).Result;
+                Debugger.Break();
             });
 
             AddStep("select the first beatmap of import", () => Beatmap.Value = manager.GetWorkingBeatmap(imported.Beatmaps.First()));
@@ -911,9 +913,11 @@ namespace osu.Game.Tests.Visual.SongSelect
                 int length = RNG.Next(30000, 200000);
                 double bpm = RNG.NextSingle(80, 200);
 
+                var ruleset = getRuleset();
                 beatmaps.Add(new BeatmapInfo
                 {
-                    Ruleset = getRuleset(),
+                    Ruleset = ruleset,
+                    RulesetID = ruleset.ID.GetValueOrDefault(),
                     OnlineBeatmapID = beatmapId,
                     Version = $"{beatmapId} (length {TimeSpan.FromMilliseconds(length):m\\:ss}, bpm {bpm:0.#})",
                     Length = length,

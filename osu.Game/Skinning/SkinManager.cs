@@ -142,6 +142,16 @@ namespace osu.Game.Skinning
             }
         }
 
+        protected override void PreImport(SkinInfo model)
+        {
+            var dbContext = ContextFactory.Get();
+
+            foreach (var file in model.Files)
+            {
+                file.FileInfo = dbContext.FileInfo.Find(file.FileInfoID);
+            }
+        }
+
         /// <summary>
         /// Retrieve a <see cref="Skin"/> instance for the provided <see cref="SkinInfo"/>
         /// </summary>

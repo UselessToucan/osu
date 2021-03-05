@@ -181,6 +181,8 @@ namespace osu.Game.Tests.Scores.IO
         {
             var beatmapManager = osu.Dependencies.Get<BeatmapManager>();
 
+            var t=score.ModsJson;
+
             score.Beatmap ??= beatmapManager.GetAllUsableBeatmapSets().First().Beatmaps.First();
             score.Ruleset ??= new OsuRuleset().RulesetInfo;
 

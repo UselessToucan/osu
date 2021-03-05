@@ -780,7 +780,9 @@ namespace osu.Game.Tests.Beatmaps.IO
                     manager.Save(beatmapInfo, beatmapToUpdate);
 
                     // Check that the old file reference has been removed
-                    Assert.That(manager.QueryBeatmapSet(s => s.ID == setToUpdate.ID).Files.All(f => f.ID != fileToUpdate.ID));
+                    var beatmapSetFileInfos = manager.QueryBeatmapSet(s => s.ID == setToUpdate.ID).Files;
+                    var condition = beatmapSetFileInfos.All(f => f.ID != fileToUpdate.ID);
+                    Assert.That(condition);
 
                     // Check that the new file is referenced correctly by attempting a retrieval
                     Beatmap updatedBeatmap = (Beatmap)manager.GetWorkingBeatmap(manager.QueryBeatmap(b => b.ID == beatmapToUpdate.BeatmapInfo.ID)).Beatmap;
