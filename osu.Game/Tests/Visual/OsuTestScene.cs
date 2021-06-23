@@ -123,7 +123,7 @@ namespace osu.Game.Tests.Visual
             {
                 dummyAPI = new DummyAPIAccess();
                 Dependencies.CacheAs<IAPIProvider>(dummyAPI);
-                Add(dummyAPI);
+                base.Content.Add(dummyAPI);
             }
 
             return Dependencies;
@@ -350,7 +350,7 @@ namespace osu.Game.Tests.Visual
                     if (CurrentTime >= Length)
                     {
                         Stop();
-                        RaiseCompleted();
+                        // `RaiseCompleted` is not called here to prevent transitioning to the next song.
                     }
                 }
             }

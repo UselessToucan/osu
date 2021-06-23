@@ -43,7 +43,7 @@ If your platform is not listed above, there is still a chance you can manually b
 
 osu! is designed to have extensible modular gameplay modes, called "rulesets". Building one of these allows a developer to harness the power of osu! for their own game style. To get started working on a ruleset, we have some templates available [here](https://github.com/ppy/osu/tree/master/Templates).
 
-You can see some examples of custom rulesets by visiting the [custom ruleset directory](https://github.com/ppy/osu/issues/5852).
+You can see some examples of custom rulesets by visiting the [custom ruleset directory](https://github.com/ppy/osu/discussions/13096).
 
 ## Developing osu!
 
@@ -97,7 +97,7 @@ Before committing your code, please run a code formatter. This can be achieved b
 
 We have adopted some cross-platform, compiler integrated analyzers. They can provide warnings when you are editing, building inside IDE or from command line, as-if they are provided by the compiler itself.
 
-JetBrains ReSharper InspectCode is also used for wider rule sets. You can run it from PowerShell with `.\InspectCode.ps1`, which is [only supported on Windows](https://youtrack.jetbrains.com/issue/RSRP-410004). Alternatively, you can install ReSharper or use Rider to get inline support in your IDE of choice.
+JetBrains ReSharper InspectCode is also used for wider rule sets. You can run it from PowerShell with `.\InspectCode.ps1`. Alternatively, you can install ReSharper or use Rider to get inline support in your IDE of choice.
 
 ## Contributing
 
