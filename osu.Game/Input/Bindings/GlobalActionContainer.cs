@@ -122,7 +122,7 @@ namespace osu.Game.Input.Bindings
                 // allow the whole game to handle these actions.
 
                 // An eventual solution to this hack is to create localised action containers for individual components like SongSelect, but this will take some rearranging.
-                var inputQueue = parentInputManager?.NonPositionalInputQueue ?? base.KeyBindingInputQueue;
+                var inputQueue = parentInputManager?.NonPositionalInputQueue.Regular ?? base.KeyBindingInputQueue;
 
                 return handler != null ? inputQueue.Prepend(handler) : inputQueue;
             }
