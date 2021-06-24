@@ -6,6 +6,7 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Textures;
 using osu.Framework.Input.Events;
+using osu.Framework.Localisation;
 using osu.Game.Graphics.Containers;
 
 namespace osu.Game.Users.Drawables
@@ -70,10 +71,10 @@ namespace osu.Game.Users.Drawables
         {
             private string tooltip = default_tooltip_text;
 
-            public override string TooltipText
+            public override LocalisableString TooltipText
             {
                 get => Enabled.Value ? tooltip : null;
-                set => tooltip = value;
+                set => tooltip = value.ToString();
             }
 
             protected override bool OnClick(ClickEvent e)
