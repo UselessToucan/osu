@@ -112,6 +112,21 @@ namespace osu.Game.Input.Bindings
             new KeyBinding(InputKey.PlayPause, GlobalAction.MusicPlay),
             new KeyBinding(InputKey.F3, GlobalAction.MusicPlay)
         };
+
+        protected override IEnumerable<Drawable> KeyBindingInputQueue
+        {
+            get
+            {
+                // To ensure the global actions are handled with priority, this GlobalActionContainer is actually placed after game content.
+                // It does not contain children as expected, so we need to forward the NonPositionalInputQueue from the parent input manager to correctly
+                // allow the whole game to handle these actions.
+
+                // An eventual solution to this hack is to create localised action containers for individual components like SongSelect, but this will take some rearranging.
+                var inputQueue = parentInputManager?.NonPositionalInputQueue ?? base.KeyBindingInputQueue;
+
+                return handler != null ? inputQueue.Prepend(handler) : inputQueue;
+            }
+        }
     }
 
     public enum GlobalAction
